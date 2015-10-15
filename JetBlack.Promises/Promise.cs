@@ -144,8 +144,8 @@ namespace JetBlack.Promises
                     break;
 
                 default:
-                    _handlers.AddResolveHandler(resolveHandler, rejectable);
-                    _handlers.AddRejectHandler(rejectHandler, rejectable);
+                    _handlers.AddResolver(resolveHandler, rejectable);
+                    _handlers.AddRejector(rejectHandler, rejectable);
                     break;
             }
 
@@ -418,8 +418,8 @@ namespace JetBlack.Promises
                     rejectHandler.TryCatch(_rejectionException, promise.Reject);
                     break;
                 default:
-                    _handlers.AddResolveHandler(resolveHandler, promise);
-                    _handlers.AddRejectHandler(rejectHandler, promise);
+                    _handlers.AddResolvers(resolveHandler, promise);
+                    _handlers.AddRejectors(rejectHandler, promise);
                     break;
             }
 
