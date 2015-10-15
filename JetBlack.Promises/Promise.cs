@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace JetBlack.Promises
 {
@@ -271,7 +272,7 @@ namespace JetBlack.Promises
         private readonly Handlers<T> _handlers = new Handlers<T>();
 
         private Exception _rejectionException;
-        private T _resolveValue;
+        private T _resolvedValue;
 
         public PromiseState State { get; private set; }
 
@@ -291,7 +292,7 @@ namespace JetBlack.Promises
             if (State != PromiseState.Pending)
                 throw new ApplicationException("Attempt to resolve a promise that is already in state: {0}, a promise can only be resolved when it is still in state: {1}".Format(State, PromiseState.Pending));
 
-            _resolveValue = value;
+            _resolvedValue = value;
             State = PromiseState.Resolved;
             _handlers.Resolve(value);
         }
@@ -411,15 +412,15 @@ namespace JetBlack.Promises
         {
             switch (State)
             {
+                case PromiseState.Pending:
+                    _handlers.AddResolvers(resolveHandler, promise);
+                    _handlers.AddRejectors(rejectHandler, promise);
+                    break;
                 case PromiseState.Resolved:
-                    resolveHandler.TryCatch(_resolveValue, promise.Reject);
+                    resolveHandler.TryCatch(_resolvedValue, promise.Reject);
                     break;
                 case PromiseState.Rejected:
                     rejectHandler.TryCatch(_rejectionException, promise.Reject);
-                    break;
-                default:
-                    _handlers.AddResolvers(resolveHandler, promise);
-                    _handlers.AddRejectors(rejectHandler, promise);
                     break;
             }
 
@@ -529,6 +530,23 @@ namespace JetBlack.Promises
             var promise = new Promise<T>();
             promise.Reject(error);
             return promise;
+        }
+
+        public override string ToString()
+        {
+            var s = new StringBuilder("State=").Append(State);
+            switch (State)
+            {
+                case PromiseState.Resolved:
+                    s.Append(", ResolvedValue=").Append(_resolvedValue);
+                    break;
+                case PromiseState.Rejected:
+                    s.Append(", Exception=").Append(_rejectionException.Message);
+                    if (!string.IsNullOrWhiteSpace(_rejectionException.StackTrace))
+                        s.Append(": ").Append(_rejectionException.StackTrace);
+                    break;
+            }
+            return s.ToString();
         }
     }
 }
