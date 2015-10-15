@@ -28,7 +28,7 @@ namespace JetBlack.Promises
         public void Resolve()
         {
             if (State != PromiseState.Pending)
-                throw new ApplicationException("Attempt to resolve a promise that is already in state: " + State + ", a promise can only be resolved when it is still in state: " + PromiseState.Pending);
+                throw new ApplicationException("Attempt to resolve a promise that is already in state {0}, a promise can only be resolved when it is still in state {1}.".Format(State, PromiseState.Pending));
 
             State = PromiseState.Resolved;
             _handlers.Resolve();
@@ -37,7 +37,7 @@ namespace JetBlack.Promises
         public void Reject(Exception error)
         {
             if (State != PromiseState.Pending)
-                throw new ApplicationException("Attempt to reject a promise that is already in state: " + State + ", a promise can only be rejected when it is still in state: " + PromiseState.Pending);
+                throw new ApplicationException("Attempt to reject a promise that is already in state {0}, a promise can only be rejected when it is still in state {1}.".Format(State, PromiseState.Pending));
 
             _rejectionException = error;
             State = PromiseState.Rejected;
@@ -46,7 +46,7 @@ namespace JetBlack.Promises
 
         public void Done(Action onResolved = null, Action<Exception> onRejected = null)
         {
-            ActionHandlers(new Promise(), onResolved ?? Extensions.Nothing, onRejected ?? (error => PropagateUnhandledException(this, error)));
+            TryResolve(new Promise(), onResolved ?? Extensions.Nothing, onRejected ?? (error => PropagateUnhandledException(this, error)));
         }
 
         public IPromise Catch(Action<Exception> onRejected = null)
@@ -57,7 +57,7 @@ namespace JetBlack.Promises
         private IPromise Catch(Promise resultPromise, Action<Exception> onRejected)
         {
             return
-                ActionHandlers(
+                TryResolve(
                     resultPromise,
                     resultPromise.Resolve,
                     error =>
@@ -72,20 +72,20 @@ namespace JetBlack.Promises
             return Then(new Promise(), onResolved ?? Extensions.Nothing, onRejected ?? Extensions.Nothing);
         }
 
-        private IPromise Then(Promise resultPromise, Action onResolved, Action<Exception> onRejected)
+        private IPromise Then(Promise promise, Action onResolved, Action<Exception> onRejected)
         {
             return
-                ActionHandlers(
-                    resultPromise,
+                TryResolve(
+                    promise,
                     () =>
                     {
                         onResolved();
-                        resultPromise.Resolve();
+                        promise.Resolve();
                     },
                     error =>
                     {
                         onRejected(error);
-                        resultPromise.Reject(error);
+                        promise.Reject(error);
                     });
         }
 
@@ -94,16 +94,16 @@ namespace JetBlack.Promises
             return Then(new Promise<TNext>(), onResolved, onRejected ?? Extensions.Nothing);
         }
 
-        private IPromise<TNext> Then<TNext>(Promise<TNext> resultPromise, Func<IPromise<TNext>> onResolved, Action<Exception> onRejected)
+        private IPromise<TNext> Then<TNext>(Promise<TNext> promise, Func<IPromise<TNext>> onResolved, Action<Exception> onRejected)
         {
             return
-                ActionHandlers(
-                    resultPromise,
-                    () => onResolved().Then(nextValue => resultPromise.Resolve(nextValue), resultPromise.Reject),
+                TryResolve(
+                    promise,
+                    () => onResolved().Then(nextValue => promise.Resolve(nextValue), promise.Reject),
                     error =>
                     {
                         onRejected(error);
-                        resultPromise.Reject(error);
+                        promise.Reject(error);
                     });
         }
 
@@ -112,44 +112,44 @@ namespace JetBlack.Promises
             return Then(new Promise(), onResolved, onRejected ?? Extensions.Nothing);
         }
 
-        private Promise Then(Promise resultPromise, Func<IPromise> onResolved, Action<Exception> onRejected)
+        private Promise Then(Promise promise, Func<IPromise> onResolved, Action<Exception> onRejected)
         {
             return
-                ActionHandlers(
-                    resultPromise,
+                TryResolve(
+                    promise,
                     () =>
                     {
                         if (onResolved == null)
-                            resultPromise.Resolve();
+                            promise.Resolve();
                         else
-                            onResolved().Then(() => resultPromise.Resolve(), resultPromise.Reject);
+                            onResolved().Then(() => promise.Resolve(), promise.Reject);
                     },
                     error =>
                     {
                         onRejected(error);
-                        resultPromise.Reject(error);
+                        promise.Reject(error);
                     });
         }
 
-        private TRejectable ActionHandlers<TRejectable>(TRejectable resultPromise, Action resolveHandler, Action<Exception> rejectHandler) where TRejectable : IRejectable
+        private TRejectable TryResolve<TRejectable>(TRejectable rejectable, Action resolveHandler, Action<Exception> rejectHandler) where TRejectable : IRejectable
         {
             switch (State)
             {
                 case PromiseState.Resolved:
-                    resolveHandler.TryCatch(resultPromise.Reject);
+                    resolveHandler.TryCatch(rejectable.Reject);
                     break;
 
                 case PromiseState.Rejected:
-                    rejectHandler.TryCatch(_rejectionException, resultPromise.Reject);
+                    rejectHandler.TryCatch(_rejectionException, rejectable.Reject);
                     break;
 
                 default:
-                    _handlers.AddResolveHandler(resolveHandler, resultPromise);
-                    _handlers.AddRejectHandler(rejectHandler, resultPromise);
+                    _handlers.AddResolveHandler(resolveHandler, rejectable);
+                    _handlers.AddRejectHandler(rejectHandler, rejectable);
                     break;
             }
 
-            return resultPromise;
+            return rejectable;
         }
 
         public IPromise ThenAll(Func<IEnumerable<IPromise>> chain)
@@ -289,7 +289,7 @@ namespace JetBlack.Promises
         public void Resolve(T value)
         {
             if (State != PromiseState.Pending)
-                throw new ApplicationException("Attempt to resolve a promise that is already in state: " + State + ", a promise can only be resolved when it is still in state: " + PromiseState.Pending);
+                throw new ApplicationException("Attempt to resolve a promise that is already in state: {0}, a promise can only be resolved when it is still in state: {1}".Format(State, PromiseState.Pending));
 
             _resolveValue = value;
             State = PromiseState.Resolved;
@@ -299,7 +299,7 @@ namespace JetBlack.Promises
         public void Reject(Exception error)
         {
             if (State != PromiseState.Pending)
-                throw new ApplicationException("Attempt to reject a promise that is already in state: " + State + ", a promise can only be rejected when it is still in state: " + PromiseState.Pending);
+                throw new ApplicationException("Attempt to reject a promise that is already in state: {0}, a promise can only be rejected when it is still in state: {1}".Format(State, PromiseState.Pending));
 
             _rejectionException = error;
             State = PromiseState.Rejected;
@@ -308,7 +308,7 @@ namespace JetBlack.Promises
 
         public void Done(Action<T> onResolved = null, Action<Exception> onRejected = null)
         {
-            ActionHandlers(new Promise<T>(), onResolved ?? Extensions.Nothing, onRejected ?? (error => Promise.PropagateUnhandledException(this, error)));
+            TryResolve(new Promise<T>(), onResolved ?? Extensions.Nothing, onRejected ?? (error => Promise.PropagateUnhandledException(this, error)));
         }
 
         public IPromise<T> Catch(Action<Exception> onRejected = null)
@@ -316,16 +316,16 @@ namespace JetBlack.Promises
             return Catch(new Promise<T>(), onRejected ?? Extensions.Nothing);
         }
 
-        private IPromise<T> Catch(Promise<T> resultPromise, Action<Exception> onRejected)
+        private IPromise<T> Catch(Promise<T> promise, Action<Exception> onRejected)
         {
             return
-                ActionHandlers(
-                    resultPromise,
-                    resultPromise.Resolve,
+                TryResolve(
+                    promise,
+                    promise.Resolve,
                     error =>
                     {
                         onRejected(error);
-                        resultPromise.Reject(error);
+                        promise.Reject(error);
                     });
         }
 
@@ -334,20 +334,20 @@ namespace JetBlack.Promises
             return Then(new Promise<T>(), onResolved ?? Extensions.Nothing, onRejected ?? Extensions.Nothing);
         }
 
-        private IPromise<T> Then(Promise<T> resultPromise, Action<T> onResolved, Action<Exception> onRejected)
+        private IPromise<T> Then(Promise<T> promise, Action<T> onResolved, Action<Exception> onRejected)
         {
             return
-                ActionHandlers(
-                    resultPromise,
+                TryResolve(
+                    promise,
                     value =>
                     {
                         onResolved(value);
-                        resultPromise.Resolve(value);
+                        promise.Resolve(value);
                     },
                     error =>
                     {
                         onRejected(error);
-                        resultPromise.Reject(error);
+                        promise.Reject(error);
                     });
         }
 
@@ -356,22 +356,22 @@ namespace JetBlack.Promises
             return Then(new Promise(), onResolved, onRejected ?? Extensions.Nothing);
         }
 
-        private IPromise Then(Promise resultPromise, Func<T, IPromise> onResolved, Action<Exception> onRejected)
+        private IPromise Then(Promise promise, Func<T, IPromise> onResolved, Action<Exception> onRejected)
         {
             return
-                ActionHandlers(
-                    resultPromise,
+                TryResolve(
+                    promise,
                     value =>
                     {
                         if (onResolved != null)
-                            onResolved(value).Then(() => resultPromise.Resolve(), resultPromise.Reject);
+                            onResolved(value).Then(() => promise.Resolve(), promise.Reject);
                         else
-                            resultPromise.Resolve();
+                            promise.Resolve();
                     },
                     error =>
                     {
                         onRejected(error);
-                        resultPromise.Reject(error);
+                        promise.Reject(error);
                     });
         }
 
@@ -380,16 +380,16 @@ namespace JetBlack.Promises
             return Then(new Promise<TNext>(), onResolved, onRejected ?? Extensions.Nothing);
         }
 
-        private IPromise<TNext> Then<TNext>(Promise<TNext> resultPromise, Func<T, IPromise<TNext>> onResolved, Action<Exception> onRejected)
+        private IPromise<TNext> Then<TNext>(Promise<TNext> promise, Func<T, IPromise<TNext>> onResolved, Action<Exception> onRejected)
         {
             return
-                ActionHandlers(
-                    resultPromise,
-                    value => onResolved(value).Then(chainedValue => resultPromise.Resolve(chainedValue), resultPromise.Reject),
+                TryResolve(
+                    promise,
+                    value => onResolved(value).Then(chainedValue => promise.Resolve(chainedValue), promise.Reject),
                     error =>
                     {
                         onRejected(error);
-                        resultPromise.Reject(error);
+                        promise.Reject(error);
                     });
         }
 
@@ -398,32 +398,32 @@ namespace JetBlack.Promises
             return Transform(new Promise<TNext>(), transform);
         }
 
-        private IPromise<TNext> Transform<TNext>(Promise<TNext> resultPromise, Func<T, TNext> transform)
+        private IPromise<TNext> Transform<TNext>(Promise<TNext> promise, Func<T, TNext> transform)
         {
             return
-                ActionHandlers(
-                    resultPromise,
-                    value => resultPromise.Resolve(transform(value)),
-                    resultPromise.Reject);
+                TryResolve(
+                    promise,
+                    value => promise.Resolve(transform(value)),
+                    promise.Reject);
         }
 
-        private TRejectable ActionHandlers<TRejectable>(TRejectable resultPromise, Action<T> resolveHandler, Action<Exception> rejectHandler) where TRejectable:IRejectable
+        private TRejectable TryResolve<TRejectable>(TRejectable promise, Action<T> resolveHandler, Action<Exception> rejectHandler) where TRejectable:IRejectable
         {
             switch (State)
             {
                 case PromiseState.Resolved:
-                    resolveHandler.TryCatch(_resolveValue, resultPromise.Reject);
+                    resolveHandler.TryCatch(_resolveValue, promise.Reject);
                     break;
                 case PromiseState.Rejected:
-                    rejectHandler.TryCatch(_rejectionException, resultPromise.Reject);
+                    rejectHandler.TryCatch(_rejectionException, promise.Reject);
                     break;
                 default:
-                    _handlers.AddResolveHandler(resolveHandler, resultPromise);
-                    _handlers.AddRejectHandler(rejectHandler, resultPromise);
+                    _handlers.AddResolveHandler(resolveHandler, promise);
+                    _handlers.AddRejectHandler(rejectHandler, promise);
                     break;
             }
 
-            return resultPromise;
+            return promise;
         }
 
         public IPromise<IEnumerable<TNext>> ThenAll<TNext>(Func<T, IEnumerable<IPromise<TNext>>> chain)

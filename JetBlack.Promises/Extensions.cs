@@ -61,5 +61,10 @@ namespace JetBlack.Promises
                 onError(error);
             }
         }
+
+        public static string Format(this string format, params object[] args)
+        {
+            return string.Format(format, args);
+        }
     }
 }
