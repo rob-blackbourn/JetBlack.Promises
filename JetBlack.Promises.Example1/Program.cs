@@ -11,7 +11,7 @@ namespace JetBlack.Promises.Example1
         {
             var running = true;
 
-            Download("http://intranet/Pages/home.aspx")   // Schedule an async operation.
+            Download("http://www.google.com")   // Schedule an async operation.
                 .Then(result =>                 // Use Done to register a callback to handle completion of the async operation.
                 {
                     Console.WriteLine("Async operation completed.");

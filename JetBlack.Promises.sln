@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JetBlack.Promises", "JetBlack.Promises\JetBlack.Promises.csproj", "{43723FED-C46C-460F-9237-50E61ACB4436}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{156468C1-7A02-4CD2-9BCF-6CFFF0CEC1F9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JetBlack.Promises.Example1", "JetBlack.Promises.Example1\JetBlack.Promises.Example1.csproj", "{E0BA28AF-DBBB-4774-BD0D-DC7BE34BA113}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JetBlack.Promises.Example2", "JetBlack.Promises.Example2\JetBlack.Promises.Example2.csproj", "{8BB09556-B91F-4B3D-96B2-3D69A4278B3B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,11 +31,16 @@ Global
 		{E0BA28AF-DBBB-4774-BD0D-DC7BE34BA113}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E0BA28AF-DBBB-4774-BD0D-DC7BE34BA113}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E0BA28AF-DBBB-4774-BD0D-DC7BE34BA113}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8BB09556-B91F-4B3D-96B2-3D69A4278B3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8BB09556-B91F-4B3D-96B2-3D69A4278B3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8BB09556-B91F-4B3D-96B2-3D69A4278B3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8BB09556-B91F-4B3D-96B2-3D69A4278B3B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E0BA28AF-DBBB-4774-BD0D-DC7BE34BA113} = {156468C1-7A02-4CD2-9BCF-6CFFF0CEC1F9}
+		{8BB09556-B91F-4B3D-96B2-3D69A4278B3B} = {156468C1-7A02-4CD2-9BCF-6CFFF0CEC1F9}
 	EndGlobalSection
 EndGlobal
