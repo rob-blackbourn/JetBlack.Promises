@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace JetBlack.Promises
 {
     /// <summary>
-    /// Implements a non-generic C# promise, this is a promise that simply resolves without delivering a value.
+    /// Implements a non-generic promise, this is a promise that simply resolves without delivering a value.
     /// </summary>
     public interface IPromise
     {
