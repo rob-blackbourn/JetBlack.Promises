@@ -1,24 +1,25 @@
 ﻿namespace JetBlack.Promises
 {
     /// <summary>
-    /// Interface for a promise that can be rejected or resolved.
+    /// A promise that can be rejected or resolved.
     /// </summary>
     public interface IPendingPromise : IRejectable
     {
         /// <summary>
-        /// Resolve the promise with a particular value.
+        /// Resolve the promise.
         /// </summary>
         void Resolve();
     }
 
     /// <summary>
-    /// Interface for a promise that can be rejected or resolved.
+    /// A promise that can be rejected or resolved.
     /// </summary>
     public interface IPendingPromise<in T> : IRejectable
     {
         /// <summary>
         /// Resolve the promise with a particular value.
         /// </summary>
+        /// <param name="value">The value with which to resolve the promise.</param>
         void Resolve(T value);
     }
 }
