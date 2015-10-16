@@ -4,52 +4,76 @@ using System.Collections.Generic;
 namespace JetBlack.Promises
 {
     /// <summary>
-    /// Implements a non-generic promise, this is a promise that simply resolves without delivering a value.
+    /// A promise which takes no arguments.
     /// </summary>
     public interface IPromise
     {
         /// <summary>
-        /// Completes the promise. 
-        /// onResolved is called on successful completion.
-        /// onRejected is called on error.
+        /// Completes a promise. Calls onFulfilled or onRejected with the fulfillment value or rejection reason of the promise (as appropriate).
+        /// 
+        /// Unlike &quot;then&quot; it does not return a Promise.
         /// </summary>
-        void Done(Action onResolved = null, Action<Exception> onRejected = null);
+        /// <param name="onFulfilled">Called on successful completion.</param>
+        /// <param name="onRejected">Called on error.</param>
+        void Done(Action onFulfilled = null, Action<Exception> onRejected = null);
 
         /// <summary>
-        /// Handle errors for the promise. 
+        /// Returns a Promise and deals with rejected cases only.
         /// </summary>
+        /// <param name="onRejected">Called if the promise is rejected.</param>
+        /// <returns>A new promise resolving to the return value of the callback if it is called, or to its original fulfillment value if the promise is instead fulfilled.</returns>
         IPromise Catch(Action<Exception> onRejected);
 
         /// <summary>
-        /// Add a resolved callback and a rejected callback.
+        /// Appends fulfill and rejection handlers to the promise, and returns a new promise
+        /// resolving to the return value of the called handler, or to its original settled
+        /// value if the promise was not handled (i.e. if the relevant handler onResolved or
+        /// onRejected is undefined).
         /// </summary>
-        IPromise Then(Action onResolved, Action<Exception> onRejected = null);
+        /// <param name="onFulfilled">Called if the promise is fulfilled.</param>
+        /// <param name="onRejected">Called if the promise is rejected.</param>
+        /// <returns>A new promise resolving to the return value of the called handler, or to its original settled value if the promise was not handled.</returns>
+        IPromise Then(Action onFulfilled, Action<Exception> onRejected = null);
 
         /// <summary>
-        /// Add a resolved callback and a rejected callback.
-        /// The resolved callback chains a value promise (optionally converting to a different value type).
+        /// Add a fulfill callback and a rejected callback.
+        /// 
+        /// The resolved callback chains a value promise of the specified type.
         /// </summary>
-        IPromise<TNext> Then<TNext>(Func<IPromise<TNext>> onResolved, Action<Exception> onRejected = null);
+        /// <typeparam name="TNext">The type of the next promise.</typeparam>
+        /// <param name="onFulfilled">Called if the promise is fullfilled.</param>
+        /// <param name="onRejected">Called if the promise is rejected.</param>
+        /// <returns>The value with which the promise was fulfilled.</returns>
+        IPromise<TNext> Then<TNext>(Func<IPromise<TNext>> onFulfilled, Action<Exception> onRejected = null);
 
         /// <summary>
-        /// Add a resolved callback and a rejected callback.
-        /// The resolved callback chains a non-value promise.
+        /// Calls onFulfilled or onRejected and returns a new promise.
         /// </summary>
-        IPromise Then(Func<IPromise> onResolved, Action<Exception> onRejected = null);
+        /// <param name="onFulfilled">Called if the promise is fullfilled.</param>
+        /// <param name="onRejected">Called if the promise is rejected.</param>
+        /// <returns>A new promise which takes no argument.</returns>
+        IPromise Then(Func<IPromise> onFulfilled, Action<Exception> onRejected = null);
 
+        // <summary>
+        // 
+        // </summary>
         /// <summary>
-        /// Chain an enumerable of promises, all of which must resolve.
-        /// The resulting promise is resolved when all of the promises have resolved.
-        /// It is rejected as soon as any of the promises have been rejected.
+        /// Chain an enumerable of promises, all of which must resolve. The resulting 
+        /// promise is resolved when all of the promises have resolved. It is
+        /// rejected as soon as any of the promises have been rejected.
         /// </summary>
+        /// <param name="chain">A function returning an enumeration of chains.</param>
+        /// <returns>A promise which takes no arguments.</returns>
         IPromise ThenAll(Func<IEnumerable<IPromise>> chain);
 
         /// <summary>
-        /// Chain an enumerable of promises, all of which must resolve.
-        /// Converts to a non-value promise.
-        /// The resulting promise is resolved when all of the promises have resolved.
-        /// It is rejected as soon as any of the promises have been rejected.
+        /// Returns a Promise that waits for all promises in the chain to be fulfilled
+        /// and is then fulfilled with an array of those resulting values (in the same
+        /// order as the input).
         /// </summary>
+        /// <typeparam name="TNext">The type of the argument of the resultant promise.</typeparam>
+        /// <param name="chain">A function returning an enumeration of chains.</param>
+        /// <returns>A promise which takes the resolved value.</returns>
         IPromise<IEnumerable<TNext>> ThenAll<TNext>(Func<IEnumerable<IPromise<TNext>>> chain);
 
         /// <summary>
@@ -58,12 +82,16 @@ namespace JetBlack.Promises
         /// Each function will be called and each promise resolved in turn.
         /// The resulting promise is resolved after each promise is resolved in sequence.
         /// </summary>
+        /// <param name="chain">A function returning an enumeration of chains.</param>
+        /// <returns>A promise which takes no arguments.</returns>
         IPromise ThenSequence(Func<IEnumerable<Func<IPromise>>> chain);
 
         /// <summary>
         /// Takes a function that yields an enumerable of promises.
         /// Returns a promise that resolves when the first of the promises has resolved.
         /// </summary>
+        /// <param name="chain">A function returning an enumeration of chains.</param>
+        /// <returns>A promise which takes no arguments.</returns>
         IPromise ThenRace(Func<IEnumerable<IPromise>> chain);
 
         /// <summary>
@@ -71,79 +99,115 @@ namespace JetBlack.Promises
         /// Converts to a value promise.
         /// Returns a promise that resolves when the first of the promises has resolved.
         /// </summary>
+        /// <returns>A promise which takes the resolved value.</returns>
         IPromise<TNext> ThenRace<TNext>(Func<IEnumerable<IPromise<TNext>>> chain);
     }
 
     /// <summary>
-    /// Implements a C# promise.
-    /// https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise
+    /// A promise which resolves to a value.
     /// </summary>
-    public interface IPromise<T>
+    /// <typeparam name="T">The type of the resolved value.</typeparam>
+    public interface IPromise<out T>
     {
         /// <summary>
-        /// Completes the promise. 
-        /// onResolved is called on successful completion.
-        /// onRejected is called on error.
+        /// Completes the promise.
         /// </summary>
-        void Done(Action<T> onResolved = null, Action<Exception> onRejected = null);
+        /// <param name="onFulfilled">Called if the promise is fulfilled.</param>
+        /// <param name="onRejected">Called if the promise is rejected.</param>
+        void Done(Action<T> onFulfilled = null, Action<Exception> onRejected = null);
 
         /// <summary>
         /// Handle errors for the promise. 
         /// </summary>
+        /// <param name="onRejected">Called if the promise is rejected.</param>
+        /// <returns>A promise which resolves to a value.</returns>
         IPromise<T> Catch(Action<Exception> onRejected = null);
 
         /// <summary>
-        /// Add a resolved callback and a rejected callback.
+        /// Calls onFulfilled or onRejected with the fulfillment value or rejection
+        /// reason of the promise (as appropriate) and returns a new promise
+        /// resolving to the return value of the called handler.
         /// </summary>
-        IPromise<T> Then(Action<T> onResolved, Action<Exception> onRejected = null);
+        /// <param name="onFulfilled">Called if the promise is fulfilled.</param>
+        /// <param name="onRejected">Called if the promise is rejected.</param>
+        /// <returns>A promise which resolves to a value.</returns>
+        IPromise<T> Then(Action<T> onFulfilled, Action<Exception> onRejected = null);
 
         /// <summary>
-        /// Add a resolved callback and a rejected callback.
-        /// The resolved callback chains a value promise (optionally converting to a different value type).
+        /// Calls onFulfilled or onRejected with the fulfillment value or rejection
+        /// reason of the promise (as appropriate) and returns a new promise resolving
+        /// to the return value of the called handler which may be different to that of this promise.
         /// </summary>
-        IPromise<TNext> Then<TNext>(Func<T, IPromise<TNext>> onResolved, Action<Exception> onRejected = null);
+        /// <typeparam name="TNext">The type of the next promise.</typeparam>
+        /// <param name="onFulfilled">Called if the promise is fulfilled.</param>
+        /// <param name="onRejected">Called if the promise is rejected.</param>
+        /// <returns>A promise which resolves to a value.</returns>
+        IPromise<TNext> Then<TNext>(Func<T, IPromise<TNext>> onFulfilled, Action<Exception> onRejected = null);
 
         /// <summary>
-        /// Add a resolved callback and a rejected callback.
-        /// The resolved callback chains a non-value promise.
+        /// Calls onFulfilled or onRejected with the fulfillment value or rejection
+        /// reason of the promise (as appropriate) and returns a new promise which
+        /// takes no argument.
         /// </summary>
-        IPromise Then(Func<T, IPromise> onResolved, Action<Exception> onRejected = null);
+        /// <param name="onFulfilled">Called if the promise is fulfilled.</param>
+        /// <param name="onRejected">Called if the promise is rejected.</param>
+        /// <returns>A promise which takes no argument.</returns>
+        IPromise Then(Func<T, IPromise> onFulfilled, Action<Exception> onRejected = null);
 
+        // <summary>
+        // Return a new promise with a different value.
+        // May also change the type of the value.
+        // </summary>
         /// <summary>
-        /// Return a new promise with a different value.
-        /// May also change the type of the value.
+        /// Projects the promise to a new promise of the given type.
         /// </summary>
-        IPromise<TNext> Transform<TNext>(Func<T, TNext> transform);
+        /// <typeparam name="TNext">The type of the next promise.</typeparam>
+        /// <param name="projector">The projection function to be applied to the resolved value.</param>
+        /// <returns>A promise of the new type.</returns>
+        IPromise<TNext> Project<TNext>(Func<T, TNext> projector);
 
         /// <summary>
         /// Chain an enumerable of promises, all of which must resolve.
-        /// Returns a promise for a collection of the resolved results.
-        /// The resulting promise is resolved when all of the promises have resolved.
-        /// It is rejected as soon as any of the promises have been rejected.
+        /// 
+        /// Returns a promise for a collection of the resolved results. The resulting
+        /// promise is resolved when all of the promises have resolved. It is rejected
+        /// as soon as any of the promises have been rejected.
         /// </summary>
+        /// <typeparam name="TNext">The type of the returned promise.</typeparam>
+        /// <param name="chain">A factory function which takes the resolved value and generates an enumeration of promises.</param>
+        /// <returns>A promise of the new type.</returns>
         IPromise<IEnumerable<TNext>> ThenAll<TNext>(Func<T, IEnumerable<IPromise<TNext>>> chain);
 
         /// <summary>
-        /// Chain an enumerable of promises, all of which must resolve.
-        /// Converts to a non-value promise.
-        /// The resulting promise is resolved when all of the promises have resolved.
-        /// It is rejected as soon as any of the promises have been rejected.
+        /// Chain an enumerable of promises, all of which must resolve. Converts to a
+        /// non-value promise. The resulting promise is resolved when all of the promises
+        /// have resolved. It is rejected as soon as any of the promises have been rejected.
         /// </summary>
+        /// <param name="chain">A factory function which takes the resolved value and generates an enumeration of promises.</param>
+        /// <returns>A promise which takes no argument.</returns>
         IPromise ThenAll(Func<T, IEnumerable<IPromise>> chain);
 
         /// <summary>
-        /// Takes a function that yields an enumerable of promises.
-        /// Returns a promise that resolves when the first of the promises has resolved.
-        /// Yields the value from the first promise that has resolved.
+        /// Takes a function that yields an enumerable of promises. Returns a promise that
+        /// resolves when the first of the promises has resolved. Yields the value from the
+        /// first promise that has resolved.
         /// </summary>
+        /// <typeparam name="TNext">The type of the value to which the returned promise will resolve.</typeparam>
+        /// <param name="chain">A factory function which takes the resolved value and generates an enumeration of promises.</param>
+        /// <returns>A promise of the new type.</returns>
         IPromise<TNext> ThenRace<TNext>(Func<T, IEnumerable<IPromise<TNext>>> chain);
 
+        // <summary>
+        // 
+        // </summary>
         /// <summary>
-        /// Takes a function that yields an enumerable of promises.
-        /// Converts to a non-value promise.
-        /// Returns a promise that resolves when the first of the promises has resolved.
-        /// Yields the value from the first promise that has resolved.
+        /// Takes a function that yields an enumerable of promises. Converts to a
+        /// non-value promise. Returns a promise that resolves when the first of
+        /// the promises has resolved. Yields the value from the first promise that
+        /// has resolved.
         /// </summary>
+        /// <param name="chain">A factory function which takes the resolved value and generates an enumeration of promises.</param>
+        /// <returns>A promise which takes no argument.</returns>
         IPromise ThenRace(Func<T, IEnumerable<IPromise>> chain);
     }
 }

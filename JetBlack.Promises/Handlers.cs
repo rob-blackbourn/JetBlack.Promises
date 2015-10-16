@@ -5,17 +5,17 @@ namespace JetBlack.Promises
 {
     internal class Handlers
     {
-        private readonly IList<RejectHandler> _resolvers = new List<RejectHandler>();
-        private readonly IList<RejectHandler<Exception>> _rejectors = new List<RejectHandler<Exception>>();
+        private readonly IList<AsyncHandler> _resolvers = new List<AsyncHandler>();
+        private readonly IList<AsyncHandler<Exception>> _rejectors = new List<AsyncHandler<Exception>>();
 
         public void AddResolver(Action onResolved, IRejectable rejectable)
         {
-            _resolvers.Add(new RejectHandler { Callback = onResolved, Rejectable = rejectable });
+            _resolvers.Add(new AsyncHandler { Callback = onResolved, Rejectable = rejectable });
         }
 
         public void AddRejector(Action<Exception> onRejected, IRejectable rejectable)
         {
-            _rejectors.Add(new RejectHandler<Exception> { Callback = onRejected, Rejectable = rejectable });
+            _rejectors.Add(new AsyncHandler<Exception> { Callback = onRejected, Rejectable = rejectable });
         }
 
         public void Resolve()
@@ -39,17 +39,17 @@ namespace JetBlack.Promises
 
     internal class Handlers<T>
     {
-        private readonly IList<RejectHandler<T>> _resolvers = new List<RejectHandler<T>>();
-        private readonly IList<RejectHandler<Exception>> _rejectors = new List<RejectHandler<Exception>>();
+        private readonly IList<AsyncHandler<T>> _resolvers = new List<AsyncHandler<T>>();
+        private readonly IList<AsyncHandler<Exception>> _rejectors = new List<AsyncHandler<Exception>>();
 
         public void AddResolvers(Action<T> onResolved, IRejectable rejectable)
         {
-            _resolvers.Add(new RejectHandler<T> { Callback = onResolved, Rejectable = rejectable });
+            _resolvers.Add(new AsyncHandler<T> { Callback = onResolved, Rejectable = rejectable });
         }
 
         public void AddRejectors(Action<Exception> onRejected, IRejectable rejectable)
         {
-            _rejectors.Add(new RejectHandler<Exception> { Callback = onRejected, Rejectable = rejectable });
+            _rejectors.Add(new AsyncHandler<Exception> { Callback = onRejected, Rejectable = rejectable });
         }
 
         public void Resolve(T value)

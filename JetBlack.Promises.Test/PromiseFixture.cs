@@ -490,7 +490,7 @@ namespace JetBlack.Promises.Test
             var completed = 0;
 
             promise
-                .Transform(v => v.ToString(CultureInfo.InvariantCulture))
+                .Project(v => v.ToString(CultureInfo.InvariantCulture))
                 .Then(v =>
                 {
                     Assert.AreEqual(promisedValue.ToString(CultureInfo.InvariantCulture), v);
@@ -511,7 +511,7 @@ namespace JetBlack.Promises.Test
             var errors = 0;
 
             promise
-                .Transform(v => v.ToString(CultureInfo.InvariantCulture))
+                .Project(v => v.ToString(CultureInfo.InvariantCulture))
                 .Catch(e =>
                 {
                     Assert.AreEqual(ex, e);
@@ -533,7 +533,7 @@ namespace JetBlack.Promises.Test
             var ex = new Exception();
 
             promise
-                .Transform<string>(v =>
+                .Project<string>(v =>
                 {
                     throw ex;
                 })
